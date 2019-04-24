@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/influxdata/influxdb/client/v2"
+	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/jpillora/backoff"
 	"github.com/jpillora/opts"
 )
@@ -32,9 +32,10 @@ type config struct {
 	NoAutoCreate    bool   `help:"Disable automatic creation of database"`
 	ForceFloat      bool   `help:"Force all numeric values to insert as float"`
 	ForceString     bool   `help:"Force all numeric values to insert as string"`
-	TreatNull	    bool   `help:"Force treating 'null' string values as such"`
+	TreatNull       bool   `help:"Force treating 'null' string values as such"`
 	Attempts        int    `help:"Maximum number of attempts to send data to influxdb before failing"`
-	HttpTimeout	    int    `help:"Timeout (in seconds) for http writes used by underlying influxdb client"`
+	HttpTimeout     int    `help:"Timeout (in seconds) for http writes used by underlying influxdb client"`
+	RetentionPolicy string `help:"Retention policy name"`
 }
 
 func main() {
@@ -52,7 +53,8 @@ func main() {
 		TreatNull:       false,
 		TimestampColumn: "timestamp",
 		TimestampFormat: "2006-01-02 15:04:05",
-		HttpTimeout:	 10,
+		HttpTimeout:     10,
+		RetentionPolicy: "autogen",
 	}
 
 	//parse config
@@ -153,7 +155,7 @@ func main() {
 		headers = hdrs
 	}
 
-	var bpConfig = client.BatchPointsConfig{Database: conf.Database}
+	var bpConfig = client.BatchPointsConfig{Database: conf.Database, RetentionPolicy: conf.RetentionPolicy}
 	bp, _ := client.NewBatchPoints(bpConfig) //current batch
 	bpSize := 0
 	totalSize := 0
